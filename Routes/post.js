@@ -16,14 +16,14 @@ router.get('/recents' , (request,response) => {
         .sort({date : 'descending'})
         .limit(10)
         .then((items) => {
-            response.statusCode(200).json(items);
+            response.status(200).json(items);
         })
         .catch((findErr) => {
-            response.statusCode(500).json(findErr);
+            response.status(500).json(findErr);
         });
     })
     .catch((connectionError) => {
-        response.statusCode(500).json(connectionError);
+        response.status(500).json(connectionError);
     });
 });
 
@@ -39,18 +39,18 @@ router.post('/',(request, response) => {
                 { '$addToSet' : tags}
             )
             .catch((tagError) => {
-                response.statusCode(500).json({'message' : 'failed to add to tags'});
+                response.status(500).json({'message' : 'failed to add to tags'});
             });
             Company.update(
                 {'$addToSet' : companies}
             )
             .catch((companyError) => {
-                response.statusCode(500).json({'message' : 'failed to add to company'});
+                response.status(500).json({'message' : 'failed to add to company'});
             });
-            response.statusCode(200).json(savedPost);
+            response.status(200).json(savedPost);
         })
         .catch((saveError) => {
-            response.statusCode(500).json(saveError);
+            response.status(500).json(saveError);
         });
     })
     .catch((connectError) => {
@@ -68,18 +68,18 @@ router.post('/postComment' ,(request,response) => {
         )
         .then(numAffected => {
             if(numAffected > 0){
-                response.statusCode(200).json({'message':numAffected})
+                response.status(200).json({'message':numAffected})
             }
             else{
-                response.statusCode(500).json({'message':'failed to update'});
+                response.status(500).json({'message':'failed to update'});
             }
         })
         .catch((updateError) => {
-            response.statusCode(500).json(updateError);
+            response.status(500).json(updateError);
         });
     })
     .catch((connectError) => {
-        response.statusCode(500).json(connectError);
+        response.status(500).json(connectError);
     });
 });
 
@@ -88,14 +88,14 @@ router.get('/getComments' , (request,response) => {
     .then(() => {
         Post.findOne({_id : request.body.postId})
         .then((item) => {
-            response.statusCode(200).json(item.comments);
+            response.status(200).json(item.comments);
         })
         .catch((findError) => {
-            response.statusCode(404).json(findError);
+            response.status(404).json(findError);
         });
     })
     .catch((connecterror) => {
-        response.statusCode(500).json(connecterror);
+        response.status(500).json(connecterror);
     });
 });
 
@@ -109,7 +109,7 @@ router.get('/getCompaniesTags', (request,response) => {
             res.tags = tags;
         })
         .catch((tagError) => {
-            response.statusCode(500).json(tagError);
+            response.status(500).json(tagError);
         });
 
         Company.find()
@@ -117,11 +117,11 @@ router.get('/getCompaniesTags', (request,response) => {
             res.companies = companies;
         })
         .catch((companyError) => {
-            response.statusCode(500).json(companyError);
+            response.status(500).json(companyError);
         });
     })
     .catch((connectError) => {
-        response.statusCode(500).json(connectError);
+        response.status(500).json(connectError);
     });
 });
 

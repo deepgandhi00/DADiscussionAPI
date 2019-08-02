@@ -14,14 +14,14 @@ router.get('/checkUser' , (request,response) => {
 
         User.findOne({email : email, password : password})
         .then((item) => {
-            response.statusCode(200).json(item);
+            response.status(200).json(item);
         })
         .catch((err) => {
-            response.statusCode(404).json({'message' : 'no user found'});
+            response.status(404).json({'message' : 'no user found'});
         });
     })
     .catch((error) => {
-        response.statusCode(500).json(error);
+        response.status(500).json(error);
     });
 });
 
@@ -36,22 +36,22 @@ router.post('/' , (request,response) => {
             if(item == []){
                 user.save()
                 .then((doc) => {
-                    response.statusCode(200).json(doc);
+                    response.status(200).json(doc);
                 })
                 .catch((errr) => {
-                    response.statusCode(500).json(errr);
+                    response.status(500).json(errr);
                 })
             }
             else{
-                response.statusCode(409).json(item);
+                response.status(409).json(item);
             }
         })
         .catch((err) => {
-            response.statusCode(500).json(err);
+            response.status(500).json(err);
         })
     })
     .catch((error) => {
-        response.statusCode(500).json(error);
+        response.status(500).json(error);
     });
 });
 
