@@ -124,3 +124,5 @@ router.get('/getCompaniesTags', (request,response) => {
         response.statusCode(500).json(connectError);
     });
 });
+
+module.exports = router;
