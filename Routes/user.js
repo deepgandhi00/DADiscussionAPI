@@ -14,10 +14,15 @@ router.get('/checkUser' , (request,response) => {
 
         User.findOne({email : email, password : password})
         .then((item) => {
-            response.status(200).json(item);
+            if(item.length > 0){
+                response.status(200).json(item);
+            }
+            else{
+                response.send(404).json({'message':'no user found'});
+            }
         })
         .catch((err) => {
-            response.status(404).json({'message' : 'no user found'});
+            response.status(404).json({'message':'no user found'});
         });
     })
     .catch((error) => {
@@ -30,10 +35,10 @@ router.post('/' , (request,response) => {
     .then(() => {
         const user = new User(request.body.user);
         const email = user.email;
-
+        console.log(user);
         User.find({email : email})
         .then((item) => {
-            if(item == []){
+            if(item.length === 0){
                 user.save()
                 .then((doc) => {
                     response.status(200).json(doc);

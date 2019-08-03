@@ -13,8 +13,10 @@ router.get('/recents' , (request,response) => {
     mongoose.connect(connectionString ,{ useNewUrlParser : true})
     .then(() => {
         Post.find()
+        .select({'_id':0, 'comments':0 , '__v':0})
         .sort({date : 'descending'})
         .limit(10)
+        .exec()
         .then((items) => {
             response.status(200).json(items);
         })
@@ -30,24 +32,33 @@ router.get('/recents' , (request,response) => {
 router.post('/',(request, response) => {
     mongoose.connect(connectionString , {useNewUrlParser: true})
     .then(() => {
-        const post = new Post(request.body.post);
-        const tags = post.tags;
-        const companies = post.companies;
+        var posts = request.body.post;
+        posts._id = new mongoose.Types.ObjectId();
+        const post = new Post(posts);
+        const tags = post.tag;
+        const companies = post.companyTag;
         post.save()
         .then((savedPost) => {
-            Tag.update(
-                { '$addToSet' : tags}
+            const values = { '$addToSet' : {'tags' : {'$each':tags}}}
+            Tag.updateMany({},
+                values
             )
+            .then((items) => {
+                const cValues = {'$addToSet' : {'companies': {'$each':companies}}}
+                Company.updateMany({},
+                    cValues
+                )
+                .then((ite) => {
+                    console.log(savedPost);
+                    response.status(200).json(savedPost);
+                })
+                .catch((companyError) => {
+                    response.status(500).json({'message' : 'failed to add to company'});
+                });
+            })
             .catch((tagError) => {
                 response.status(500).json({'message' : 'failed to add to tags'});
             });
-            Company.update(
-                {'$addToSet' : companies}
-            )
-            .catch((companyError) => {
-                response.status(500).json({'message' : 'failed to add to company'});
-            });
-            response.status(200).json(savedPost);
         })
         .catch((saveError) => {
             response.status(500).json(saveError);
@@ -62,13 +73,15 @@ router.post('/postComment' ,(request,response) => {
     mongoose.connect(connectionString , {useNewUrlParser: true})
     .then(() => {
         const comment = new Comment(request.body.comment);
-        Post.update(
+        console.log(comment);
+        Post.updateOne(
             {_id : request.body.postId },
-            { $push: {comments : comment}}
+            { '$push': {comments : comment}}
         )
         .then(numAffected => {
-            if(numAffected > 0){
-                response.status(200).json({'message':numAffected})
+            console.log(numAffected);
+            if(numAffected.nModified > 0){
+                response.status(200).json({'message':'posted the comment'});
             }
             else{
                 response.status(500).json({'message':'failed to update'});
@@ -86,12 +99,33 @@ router.post('/postComment' ,(request,response) => {
 router.get('/getComments' , (request,response) => {
     mongoose.connect(connectionString , {useNewUrlParser : true})
     .then(() => {
-        Post.findOne({_id : request.body.postId})
-        .then((item) => {
-            response.status(200).json(item.comments);
+        Post.findOne({'_id' : request.body.postId, 'comments.type':1})
+        .populate('comments.userId')
+        .exec((err,comments) => {
+            if(err){
+                response.status(500).json(err);
+            }
+            else{
+                response.status(200).json(comments.comments);
+            }
         })
-        .catch((findError) => {
-            response.status(404).json(findError);
+    })
+    .catch((connecterror) => {
+        response.status(500).json(connecterror);
+    });
+});
+
+
+router.get('/getCodes' , (request,response) => {
+    mongoose.connect(connectionString , {useNewUrlParser : true})
+    .then(() => {
+        Post.findOne({'_id' : request.body.postId, 'comments.type':2})
+        .populate('comments.userId')
+        .then((posts) => {
+            response.status(200).json(posts.comments);
+        })
+        .catch((Finderr) =>{
+            response.status(404).json({'message':'no comments'});
         });
     })
     .catch((connecterror) => {
@@ -107,17 +141,16 @@ router.get('/getCompaniesTags', (request,response) => {
         Tag.find()
         .then((tags) => {
             res.tags = tags;
+            Company.find()
+                .then((companies) => {
+                    res.companies = companies;
+                })
+                .catch((companyError) => {
+                    response.status(500).json(companyError);
+                });
         })
         .catch((tagError) => {
             response.status(500).json(tagError);
-        });
-
-        Company.find()
-        .then((companies) => {
-            res.companies = companies;
-        })
-        .catch((companyError) => {
-            response.status(500).json(companyError);
         });
     })
     .catch((connectError) => {
