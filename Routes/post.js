@@ -100,6 +100,7 @@ router.get('/getComments' , (request,response) => {
     mongoose.connect(connectionString , {useNewUrlParser : true})
     .then(() => {
         Post.findOne({'_id' : request.body.postId, 'comments.type':1})
+        .select({'__v':0})
         .populate('comments.userId')
         .exec((err,comments) => {
             if(err){
@@ -120,6 +121,7 @@ router.get('/getCodes' , (request,response) => {
     mongoose.connect(connectionString , {useNewUrlParser : true})
     .then(() => {
         Post.findOne({'_id' : request.body.postId, 'comments.type':2})
+        .select({'__v':0})
         .populate('comments.userId')
         .then((posts) => {
             response.status(200).json(posts.comments);
@@ -139,6 +141,7 @@ router.get('/getCompaniesTags', (request,response) => {
     .then(() => {
         let res = {};
         Tag.find()
+        .select({'__v':0})
         .then((tags) => {
             res.tags = tags;
             Company.find()
@@ -154,6 +157,52 @@ router.get('/getCompaniesTags', (request,response) => {
         });
     })
     .catch((connectError) => {
+        response.status(500).json(connectError);
+    });
+});
+
+router.get('/getSpecificTag' , (request,response) => {
+    mongoose.connect(connectionString , {useNewUrlParser : true})
+    .then(() => {
+        Post.find({ tag: { $in: request.body.tags } })
+        .select({'__v':0})
+        .exec()
+        .then((results) => {
+            if(results.length > 0){
+                response.status(200).json(results);
+            }
+            else{
+                response.status(404).json({'message':'no data'});
+            }
+        })
+        .catch((findError) => {
+            response.status(500).json({'message' : 'error'});
+        });
+    })
+    .catch((connectError) => {
+        response.status(500).json(connectError);
+    });
+});
+
+router.get('/getSpecificCompany' , (request,response) => {
+    mongoose.connect(connectionString , {useNewUrlParser : true})
+    .then(() => {
+        Post.find({ companyTag: { $in: request.body.companyTags } })
+        .select({'__v':0})
+        .exec()
+        .then((results) => {
+            if(results.length > 0){
+                response.status(200).json(results);
+            }
+            else{
+                response.status(404).json({'message':'no data'});
+            }
+        })
+        .catch((findError) => {
+            response.status(500).json({'message' : 'no data'});
+        });
+    })
+    .catch((connectError) =>{
         response.status(500).json(connectError);
     });
 });
