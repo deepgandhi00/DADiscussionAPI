@@ -11,14 +11,16 @@ router.get('/checkUser' , (request,response) => {
     .then(() => {
         const email = request.body.email;
         const password = request.body.password;
-
+        console.log(email);
+        console.log(password);
         User.findOne({email : email, password : password})
         .then((item) => {
-            if(item.length > 0){
+            console.log(item);
+            if(item){
                 response.status(200).json(item);
             }
             else{
-                response.send(404).json({'message':'no user found'});
+                response.status(404).json({'message':'no user found'});
             }
         })
         .catch((err) => {
@@ -33,7 +35,11 @@ router.get('/checkUser' , (request,response) => {
 router.post('/' , (request,response) => {
     mongoose.connect(connectionString , {useNewUrlParser : true})
     .then(() => {
-        const user = new User(request.body.user);
+        const user = new User({
+            name : request.body.name,
+            email : request.body.email,
+            password : request.body.password
+        })
         const email = user.email;
         console.log(user);
         User.find({email : email})
