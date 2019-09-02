@@ -4,6 +4,7 @@ const {Post} = require('../Schemas/schema');
 const {Comment} = require('../Schemas/schema');
 const {Tag} = require('../Schemas/schema');
 const {Company} = require('../Schemas/schema');
+const mongoosePaginate = require('mongoose-paginate-v2');
 
 const router = express.Router();
 
@@ -12,19 +13,27 @@ const connectionString = 'mongodb+srv://deep:deep99@cluster0-btif2.mongodb.net/t
 router.get('/recents' , (request,response) => {
     mongoose.connect(connectionString ,{ useNewUrlParser : true})
     .then(() => {
-        Post.find()
-        .select({'_id':0, 'comments':0 , '__v':0})
-        .sort({date : 'descending'})
-        .limit(10)
-        .exec()
+        const page = request.body.page;
+        const options = {};
+        if(page){
+            options.limit = 10;
+            options.page = page; 
+        }
+        else{
+            options.limit = 10;
+        }
+        Post.paginate({},options)
         .then((items) => {
+            console.log(items);
             response.status(200).json(items);
         })
         .catch((findErr) => {
+            console.log(findErr);
             response.status(500).json(findErr);
         });
     })
     .catch((connectionError) => {
+        console.log(connectionError);
         response.status(500).json(connectionError);
     });
 });
@@ -184,10 +193,15 @@ router.get('/getSpecificTag' , (request,response) => {
     });
 });
 
-router.get('/getSpecificCompany' , (request,response) => {
+router.get('/getQueryPosts' , (request,response) => {
     mongoose.connect(connectionString , {useNewUrlParser : true})
     .then(() => {
-        Post.find({ companyTag: { $in: request.body.companyTags } })
+        const companies = request.body.companies;
+        const types = request.body.types;
+        Post.find({ 
+            companyTag: { $in: companies },  
+            tag: { $in: types }
+        })
         .select({'__v':0})
         .exec()
         .then((results) => {
